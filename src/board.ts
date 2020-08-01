@@ -11,11 +11,11 @@ import { identity } from "fp-ts/lib/function";
 //   [1, 1, -1]
 //   [1, 0, -1]
 // ]
-type Cell = 1 | 0 | -1;
-type Board = Array<Array<Cell>>;
-type Position = [number, number];
+export type Cell = 1 | 0 | -1;
+export type Board = Array<Array<Cell>>;
+export type Pos = [number, number];
 
-export const showCell = (c: Cell): string => {
+const showCell = (c: Cell): string => {
   switch (c) {
     case 1:
       return "X";
@@ -38,7 +38,9 @@ export const show = (b: Board): string => {
   ).join("\n---------\n");
 };
 
-export const getCellAtPos = (b: Board) => ([i, j]: Position): Option<Cell> =>
+export const mkEmpty = (): Board => [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+
+export const getCellAtPos = (b: Board) => ([i, j]: Pos): Option<Cell> =>
   pipe(
     b,
     A.lookup(i),
@@ -48,7 +50,7 @@ export const getCellAtPos = (b: Board) => ([i, j]: Position): Option<Cell> =>
 type SetCellError = "non-empty-cell" | "position-out-of-bounds";
 
 export const setCellAtPos = (b: Board) => (
-  [i, j]: Position,
+  [i, j]: Pos,
   val: Cell
 ): Either<SetCellError, Board> => {
   let error: SetCellError | null;
@@ -79,14 +81,14 @@ export const setCellAtPos = (b: Board) => (
   );
 };
 
-export const emptyCellPositions = (b: Board): Array<Position> =>
+export const emptyCellPositions = (b: Board): Array<Pos> =>
   pipe(
     b,
-    A.reduceWithIndex<Array<Cell>, Array<Position>>([], (i, acc1, row) => [
+    A.reduceWithIndex<Array<Cell>, Array<Pos>>([], (i, acc1, row) => [
       ...acc1,
       ...pipe(
         row,
-        A.reduceWithIndex<Cell, Array<Position>>([], (j, acc2, cell) =>
+        A.reduceWithIndex<Cell, Array<Pos>>([], (j, acc2, cell) =>
           cell === 0 ? [...acc2, [i, j]] : acc2
         )
       )
