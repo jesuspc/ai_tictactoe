@@ -1,0 +1,5 @@
+#+TITLE: Readme
+
+* AI Typescript TicTacToe
+
+Train a neural network to play TicTacToe
