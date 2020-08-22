@@ -71,8 +71,7 @@ export const probs = (model: Model, b: Board): Array<number> => {
 
 type MoveResult = { board: Board; prob: number };
 
-export const move = (
-  model: Model,
+export const move = (model: Model) => (
   board: Board,
   player: 1 | -1
 ): MoveResult => {

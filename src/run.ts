@@ -7,5 +7,5 @@ export const runOne = () => {
   const board = BoardM.mkEmpty();
   const model = NN.mkModel(BoardM.dim(board).rows);
 
-  const newBoard = NN.move(model, board, 1);
+  const newBoard = NN.move(model)(board, 1);
 };

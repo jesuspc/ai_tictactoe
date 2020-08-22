@@ -4,19 +4,25 @@ import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { constant } from "fp-ts/lib/function";
 import * as BoardM from "./board";
-import { Board, Pos } from "./board";
+import { Board, Pos, Cell } from "./board";
 
 // import * as B from "./src/board"; import * as G from "./src/game";
 // var game = G.runGame(B.mkEmpty(), 1); console.log(B.show(game.board)); console.log(game.winner);
 
+type GameHistory = Array<{
+  board: Board;
+  score: number;
+  move: { cell: Cell; pos: Pos };
+}>;
 type GameState = {
   board: Board;
   winner: Option<1 | -1>;
+  history: GameHistory;
 };
 
 export const runGame = (b: Board, currentTurn: 1 | -1): GameState =>
   pipe(
-    runGame_(b, currentTurn, BoardM.emptyCellPositions(b)),
+    runGame_(b, currentTurn, [], BoardM.emptyCellPositions(b)),
     O.getOrElse(() => {
       throw new Error("Game execution failed");
     })
@@ -25,10 +31,11 @@ export const runGame = (b: Board, currentTurn: 1 | -1): GameState =>
 const runGame_ = (
   b: Board,
   currentTurn: 1 | -1,
+  history: GameHistory,
   available: Array<Pos>
 ): Option<GameState> => {
   if (A.isEmpty(available)) {
-    return O.some({ board: b, winner: winner(b) });
+    return O.some({ board: b, winner: winner(b), history });
   }
 
   const index = Math.floor(Math.random() * available.length);
@@ -43,16 +50,33 @@ const runGame_ = (
         O.chain(newAvailable =>
           pipe(
             O.fromEither(BoardM.setCellAtPos(b)(pos, currentTurn)),
-            O.chain(newB =>
-              pipe(
+            O.chain(newB => {
+              const historyItem = {
+                board: newB,
+                score: 1,
+                move: { cell: currentTurn, pos }
+              };
+              const newHistory = history.concat([historyItem]);
+
+              return pipe(
                 winner(newB),
                 O.fold(
                   () =>
-                    runGame_(newB, currentTurn === 1 ? -1 : 1, newAvailable),
-                  winner => O.some({ board: newB, winner: O.some(winner) })
+                    runGame_(
+                      newB,
+                      currentTurn === 1 ? -1 : 1,
+                      newHistory,
+                      newAvailable
+                    ),
+                  winner =>
+                    O.some({
+                      board: newB,
+                      winner: O.some(winner),
+                      history: newHistory
+                    })
                 )
-              )
-            )
+              );
+            })
           )
         )
       )
