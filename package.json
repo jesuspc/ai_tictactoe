@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@tensorflow/tfjs": "^2.0.1",
+    "@tensorflow/tfjs-node": "^2.3.0",
     "fp-ts": "^2.7.1",
     "typescript": "^3.9.7"
   },

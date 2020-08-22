@@ -1,11 +1,15 @@
-import * as tf from "@tensorflow/tfjs";
+import * as tf from "@tensorflow/tfjs-node";
+import * as A from "fp-ts/lib/Array";
+import * as E from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/pipeable";
+import { identity } from "fp-ts/lib/function";
 import { Board } from "./board";
 import * as BoardM from "./board";
 import * as TE from "fp-ts/lib/TaskEither";
 import { TaskEither } from "fp-ts/lib/TaskEither";
 
 type QValues = Array<number>;
-type Model = tf.Sequential;
+export type Model = tf.Sequential;
 
 type Error = "training_error";
 
@@ -19,13 +23,13 @@ export const mkModel = (boardDim: number): Model => {
         activation: "relu"
       }),
       // Returns the Q-value of each cell
-      tf.layers.dense({ units: boardDim ** 3, activation: "softmax" })
+      tf.layers.dense({ units: boardDim ** 2, activation: "softmax" })
     ]
   });
 
   model.compile({
     optimizer: "sgd",
-    loss: "mean_squared_error"
+    loss: "meanSquaredError"
   });
 
   return model;
@@ -54,5 +58,48 @@ export const train = (
       console.log("[ERROR] Training error", err);
       return "training_error";
     }
+  );
+};
+
+export const probs = (model: Model, b: Board): Array<number> => {
+  const xs = tf.tensor([BoardM.toBinaryArray(b)]);
+  const predRaw = model.predict(xs);
+  const pred = Array.isArray(predRaw) ? predRaw[0] : predRaw;
+
+  return Array.from(pred.dataSync());
+};
+
+type MoveResult = { board: Board; prob: number };
+
+export const move = (
+  model: Model,
+  board: Board,
+  player: 1 | -1
+): MoveResult => {
+  const dim = BoardM.dim(board).rows;
+
+  const validProbs = A.zipWith(
+    probs(model, board),
+    BoardM.toArray(board),
+    (prob, real) => (real === 0 ? prob : -1)
+  );
+
+  const [probIdx, prob] = pipe(
+    validProbs,
+    A.reduceWithIndex([0, -1], (i, acc, v) => (v > acc[1] ? [i, v] : acc))
+  );
+
+  const row = Math.floor(probIdx / dim);
+  const col = Math.floor(probIdx % dim);
+
+  return pipe(
+    BoardM.setCellAtPos(board)([row, col], player),
+    E.fold(
+      err => {
+        console.log("[ERROR] Unexpected fail on set cell value", err);
+        throw err;
+      },
+      b => ({ board: b, prob })
+    )
   );
 };
