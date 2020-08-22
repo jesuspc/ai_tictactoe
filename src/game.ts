@@ -94,7 +94,6 @@ const testIndices = (
   xs: Array<BoardM.Cell>,
   acc: Array<number>
 ): Option<1 | -1> => {
-  // console.log("Testing indices", acc, xs);
   return pipe(
     acc,
     A.lookup(0),
