@@ -4,7 +4,7 @@ import * as E from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 import { Either } from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
-import { identity } from "fp-ts/lib/function";
+import { absurd, identity } from "fp-ts/lib/function";
 
 // [
 //   [1, 0, -1]
@@ -12,12 +12,7 @@ import { identity } from "fp-ts/lib/function";
 //   [1, 0, -1]
 // ]
 //
-// _-a _  _   a  -      a      -
 // [1, 0, -1, 1, 1, -1, 1, 0, -1]
-// _  _-  _      -         _
-// mod 1 => test line
-// div 0 => test column
-// div 0, mod 1 or length => test diag
 export type Cell = 1 | 0 | -1;
 export type Board = Array<Array<Cell>>;
 export type Pos = [number, number];
@@ -51,6 +46,33 @@ export const dim = (b: Board): { rows: number } => ({
 });
 
 export const toArray = (b: Board): Array<Cell> => pipe(b, A.flatten);
+// dim Crosses - dim Naughts - dim Empty
+export const toBinaryArray = (b: Board): Array<boolean> => {
+  const d = dim(b).rows ** 2;
+  const initial = A.replicate(d * 3, false);
+  return pipe(
+    toArray(b),
+    A.reduceWithIndex(initial, (i, acc, e) => {
+      switch (e) {
+        case 0: {
+          acc[i + 2 * d] = true;
+          break;
+        }
+        case 1: {
+          acc[i] = true;
+          break;
+        }
+        case -1: {
+          acc[i + d] = true;
+          break;
+        }
+        default:
+          return absurd(e);
+      }
+      return acc;
+    })
+  );
+};
 
 export const getCellAtPos = (b: Board) => ([i, j]: Pos): Option<Cell> =>
   pipe(b, A.lookup(i), O.chain(A.lookup(j)));
