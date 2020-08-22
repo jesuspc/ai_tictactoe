@@ -11,6 +11,13 @@ import { identity } from "fp-ts/lib/function";
 //   [1, 1, -1]
 //   [1, 0, -1]
 // ]
+//
+// _-a _  _   a  -      a      -
+// [1, 0, -1, 1, 1, -1, 1, 0, -1]
+// _  _-  _      -         _
+// mod 1 => test line
+// div 0 => test column
+// div 0, mod 1 or length => test diag
 export type Cell = 1 | 0 | -1;
 export type Board = Array<Array<Cell>>;
 export type Pos = [number, number];
@@ -29,23 +36,24 @@ const showCell = (c: Cell): string => {
 export const show = (b: Board): string => {
   return pipe(
     b,
-    A.map(v =>
-      pipe(
-        v,
-        A.map(showCell)
-      ).join(" | ")
-    )
+    A.map(v => pipe(v, A.map(showCell)).join(" | "))
   ).join("\n---------\n");
 };
 
-export const mkEmpty = (): Board => [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+export const mkEmpty = (): Board => [
+  [0, 0, 0],
+  [0, 0, 0],
+  [0, 0, 0]
+];
+export const dim = (b: Board): { rows: number } => ({
+  rows: 3
+  // cols: 3
+});
+
+export const toArray = (b: Board): Array<Cell> => pipe(b, A.flatten);
 
 export const getCellAtPos = (b: Board) => ([i, j]: Pos): Option<Cell> =>
-  pipe(
-    b,
-    A.lookup(i),
-    O.chain(A.lookup(j))
-  );
+  pipe(b, A.lookup(i), O.chain(A.lookup(j)));
 
 type SetCellError = "non-empty-cell" | "position-out-of-bounds";
 
