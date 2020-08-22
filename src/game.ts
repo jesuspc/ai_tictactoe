@@ -9,20 +9,26 @@ import { Board, Pos, Cell } from "./board";
 // import * as B from "./src/board"; import * as G from "./src/game";
 // var game = G.runGame(B.mkEmpty(), 1); console.log(B.show(game.board)); console.log(game.winner);
 
-type GameHistory = Array<{
+export type Move = {
   board: Board;
   score: number;
   move: { cell: Cell; pos: Pos };
-}>;
+};
+export type MoveFn = (board: Board, player: 1 | -1) => Move;
+type GameHistory = Array<Move>;
 type GameState = {
   board: Board;
   winner: Option<1 | -1>;
   history: GameHistory;
 };
 
-export const runGame = (b: Board, currentTurn: 1 | -1): GameState =>
+export const runGame = (
+  b: Board,
+  currentTurn: 1 | -1,
+  move: { p1: MoveFn; p2: MoveFn }
+): GameState =>
   pipe(
-    runGame_(b, currentTurn, [], BoardM.emptyCellPositions(b)),
+    runGame_(b, currentTurn, [], move, BoardM.emptyCellPositions(b)),
     O.getOrElse(() => {
       throw new Error("Game execution failed");
     })
@@ -32,6 +38,7 @@ const runGame_ = (
   b: Board,
   currentTurn: 1 | -1,
   history: GameHistory,
+  move: { p1: MoveFn; p2: MoveFn },
   available: Array<Pos>
 ): Option<GameState> => {
   if (A.isEmpty(available)) {
@@ -66,6 +73,7 @@ const runGame_ = (
                       newB,
                       currentTurn === 1 ? -1 : 1,
                       newHistory,
+                      move,
                       newAvailable
                     ),
                   winner =>

@@ -3,7 +3,7 @@ import * as A from "fp-ts/lib/Array";
 import * as E from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 import { identity } from "fp-ts/lib/function";
-import { Board } from "./board";
+import { Move, Board } from "./board";
 import * as BoardM from "./board";
 import * as TE from "fp-ts/lib/TaskEither";
 import { TaskEither } from "fp-ts/lib/TaskEither";
@@ -69,12 +69,7 @@ export const probs = (model: Model, b: Board): Array<number> => {
   return Array.from(pred.dataSync());
 };
 
-type MoveResult = { board: Board; prob: number };
-
-export const move = (model: Model) => (
-  board: Board,
-  player: 1 | -1
-): MoveResult => {
+export const move = (model: Model) => (board: Board, player: 1 | -1): Move => {
   const dim = BoardM.dim(board).rows;
 
   const validProbs = A.zipWith(
