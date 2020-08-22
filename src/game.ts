@@ -7,9 +7,7 @@ import * as BoardM from "./board";
 import { Board, Pos } from "./board";
 
 // import * as B from "./src/board"; import * as G from "./src/game";
-// var game = G.runGame(B.mkEmpty(), 1)
-// console.log(B.show(game.board))
-// console.log(game.winner)
+// var game = G.runGame(B.mkEmpty(), 1); console.log(B.show(game.board)); console.log(game.winner);
 
 type GameState = {
   board: Board;
@@ -19,12 +17,6 @@ type GameState = {
 export const runGame = (b: Board, currentTurn: 1 | -1): GameState =>
   pipe(
     runGame_(b, currentTurn, BoardM.emptyCellPositions(b)),
-    O.map(board => {
-      return {
-        board,
-        winner: winner(board)
-      };
-    }),
     O.getOrElse(() => {
       throw new Error("Game execution failed");
     })
@@ -34,9 +26,9 @@ const runGame_ = (
   b: Board,
   currentTurn: 1 | -1,
   available: Array<Pos>
-): Option<Board> => {
+): Option<GameState> => {
   if (A.isEmpty(available)) {
-    return O.some(b);
+    return O.some({ board: b, winner: winner(b) });
   }
 
   const index = Math.floor(Math.random() * available.length);
@@ -52,7 +44,14 @@ const runGame_ = (
           pipe(
             O.fromEither(BoardM.setCellAtPos(b)(pos, currentTurn)),
             O.chain(newB =>
-              runGame_(newB, currentTurn === 1 ? -1 : 1, newAvailable)
+              pipe(
+                winner(newB),
+                O.fold(
+                  () =>
+                    runGame_(newB, currentTurn === 1 ? -1 : 1, newAvailable),
+                  winner => O.some({ board: newB, winner: O.some(winner) })
+                )
+              )
             )
           )
         )
