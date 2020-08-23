@@ -18,13 +18,13 @@ export const mkModel = (boardDim: number): Model => {
       // Receives the binary-encoded representation of each cell
       tf.layers.dense({
         inputShape: [boardDim ** 2 * 3],
-        units: boardDim ** 2 * 9,
+        units: boardDim ** 2 * 9 * 3,
         activation: "relu"
       }),
       // Returns the Q-value of each cell
       tf.layers.dense({
-        units: boardDim ** 2
-        // activation: "softmax"
+        units: boardDim ** 2,
+        activation: null
       })
     ]
   });

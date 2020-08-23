@@ -35,7 +35,6 @@ export const execute = (ex: Execution) => {
 type ExecuteOne = TaskEither<NN.Error, { game: GameState; model: Model }>;
 export const runOne = (m: Model): ExecuteOne => {
   const board = BoardM.mkEmpty();
-  const model = NN.mkModel(BoardM.dim(board).rows);
   const trainData = mkTrainData({
     winValue: 1,
     drawValue: 0,
@@ -44,7 +43,7 @@ export const runOne = (m: Model): ExecuteOne => {
   });
 
   const game = GameM.runGame(BoardM.mkEmpty(), 1, {
-    p1: NN.move(model),
+    p1: NN.move(m),
     p2: GameM.moveRandom
   });
 
