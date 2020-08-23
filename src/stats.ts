@@ -8,13 +8,13 @@ import { MoveFn } from "./game";
 // import * as Stats from "./src/stats"; import * as G from "./src/game";
 // var stats = Stats.runMany(10, { p1: G.moveRandom, p2: G.moveRandom });
 
-type Total = {
+export type Total = {
   runs: number;
   xs: number;
   os: number;
   ties: number;
 };
-type Stats = {
+export type Stats = {
   total: Total;
   totalRatio: { xs: number; os: number; ties: number };
 };

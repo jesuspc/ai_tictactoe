@@ -10,7 +10,7 @@ import { TaskEither } from "fp-ts/lib/TaskEither";
 type Targets = Array<number>;
 export type Model = tf.Sequential;
 
-type Error = "training_error";
+export type Error = "training_error";
 
 export const mkModel = (boardDim: number): Model => {
   const model = tf.sequential({
@@ -42,7 +42,7 @@ export const train = (
   return TE.tryCatch(
     () =>
       model
-        .fit(tf.tensor(BoardM.toBinaryArray(b)), tf.tensor(targets), {
+        .fit(tf.tensor([BoardM.toBinaryArray(b)]), tf.tensor([targets]), {
           shuffle: true,
           epochs: 20,
           callbacks: {
@@ -89,5 +89,8 @@ export const move = (model: Model) => (
   const row = Math.floor(probIdx / dim);
   const col = Math.floor(probIdx % dim);
 
-  return { move: { score: prob, player, pos: [row, col] }, prediction };
+  return {
+    move: { score: prob, idx: probIdx, player, pos: [row, col] },
+    prediction
+  };
 };
