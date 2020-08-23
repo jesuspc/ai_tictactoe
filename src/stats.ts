@@ -37,7 +37,7 @@ export const runMany = (n: number, move: { p1: MoveFn; p2: MoveFn }): Stats => {
   const total = pipe(
     A.range(1, n),
     A.reduce({ runs: 0, xs: 0, os: 0, ties: 0 }, acc => {
-      const run = G.runGame(B.mkEmpty(), 1, move);
+      const run = G.run(B.mkEmpty(), 1, move);
 
       acc.runs += 1;
 

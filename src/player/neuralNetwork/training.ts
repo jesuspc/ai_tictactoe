@@ -47,7 +47,7 @@ export const runOne = (m: Model): Training => {
     discount: 0.95
   });
 
-  const game = GameM.runGame(BoardM.mkEmpty(), 1, {
+  const game = GameM.run(BoardM.mkEmpty(), 1, {
     p1: NN.move(m),
     p2: RandomP.move
   });

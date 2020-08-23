@@ -28,19 +28,19 @@ export type GameState = {
   history: GameHistory;
 };
 
-export const runGame = (
+export const run = (
   b: Board,
   currentTurn: 1 | -1,
   move: { p1: MoveFn; p2: MoveFn }
 ): GameState =>
   pipe(
-    runGame_(b, currentTurn, [], move),
+    runStep(b, currentTurn, [], move),
     O.getOrElse(() => {
       throw new Error("Game execution failed");
     })
   );
 
-const runGame_ = (
+export const runStep = (
   b: Board,
   currentTurn: 1 | -1,
   history: GameHistory,
@@ -70,7 +70,7 @@ const runGame_ = (
       return pipe(
         winner(newB),
         O.fold(
-          () => runGame_(newB, currentTurn === 1 ? -1 : 1, newHistory, moveFns),
+          () => runStep(newB, currentTurn === 1 ? -1 : 1, newHistory, moveFns),
           winner =>
             O.some({
               board: newB,
