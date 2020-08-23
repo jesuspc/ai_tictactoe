@@ -45,7 +45,7 @@ export const runOne = (m: Model): ExecuteOne => {
 
   const game = GameM.runGame(BoardM.mkEmpty(), 1, {
     p1: NN.move(model),
-    p2: NN.move(model)
+    p2: GameM.moveRandom
   });
 
   const p1h = pipe(
@@ -54,20 +54,15 @@ export const runOne = (m: Model): ExecuteOne => {
     x => trainData(x, 1)
   );
 
-  const p2h = pipe(
-    game.history,
-    A.filter(e => e.move.player === -1),
-    x => trainData(x, -1)
-  );
+  // const p2h = pipe(
+  //   game.history,
+  //   A.filter(e => e.move.player === -1),
+  //   x => trainData(x, -1)
+  // );
 
   return pipe(
-    [...p1h, ...p2h],
-    A.reduce(TE.right<NN.Error, Model>(m), (acc, { board, targets }) =>
-      pipe(
-        acc,
-        TE.chain(mo => NN.train(board, targets, mo))
-      )
-    ),
+    // [...p1h, ...p2h],
+    NN.train(p1h, m),
     TE.map(model => ({ game, model }))
   );
 };

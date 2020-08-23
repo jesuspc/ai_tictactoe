@@ -22,27 +22,43 @@ export const mkModel = (boardDim: number): Model => {
         activation: "relu"
       }),
       // Returns the Q-value of each cell
-      tf.layers.dense({ units: boardDim ** 2, activation: "softmax" })
+      tf.layers.dense({
+        units: boardDim ** 2,
+        activation: "softmax"
+      })
     ]
   });
 
   model.compile({
     optimizer: "sgd",
-    loss: "meanSquaredError"
+    loss: "meanSquaredError",
+    metrics: ["accuracy"]
   });
 
   return model;
 };
 
 export const train = (
-  b: Board,
-  targets: Targets,
+  xs: Array<{ board: Board; targets: Targets }>,
   model: Model
 ): TaskEither<Error, Model> => {
+  const inputs = tf.tensor(
+    pipe(
+      xs,
+      A.map(({ board }) => BoardM.toBinaryArray(board))
+    )
+  );
+  const targets = tf.tensor(
+    pipe(
+      xs,
+      A.map(({ targets }) => targets)
+    )
+  );
+
   return TE.tryCatch(
     () =>
       model
-        .fit(tf.tensor([BoardM.toBinaryArray(b)]), tf.tensor([targets]), {
+        .fit(inputs, targets, {
           shuffle: true,
           epochs: 20,
           callbacks: {
