@@ -6,6 +6,8 @@ import { constant } from "fp-ts/lib/function";
 import * as BoardM from "./board";
 import { TaskEither } from "fp-ts/lib/TaskEither";
 import * as TE from "fp-ts/lib/TaskEither";
+import * as E from "fp-ts/lib/Either";
+import { Either } from "fp-ts/lib/Either";
 import { Board, Pos, SetCellError } from "./board";
 
 export type Error = "move_error" | "game_execution_error" | SetCellError;
@@ -36,54 +38,79 @@ export const run = (
   b: Board,
   currentTurn: 1 | -1,
   move: { p1: MoveFn; p2: MoveFn }
-): TaskEither<Error, GameState> => run_(b, currentTurn, [], move);
+): TaskEither<Error, GameState> => {
+  console.log("[Running]");
+  return TE.tryCatch(
+    () => {
+      console.log("[Calling run_]");
+      return run_(b, currentTurn, [], move);
+    },
+    _err => "game_execution_error"
+  );
+};
 
 export const run_ = (
   b: Board,
   currentTurn: 1 | -1,
   history: GameHistory,
   moveFns: { p1: MoveFn; p2: MoveFn }
-): TaskEither<Error, GameState> => {
+): Promise<GameState> => {
+  console.log("[RUN_]");
   // TODO Thread this in
   if (A.isEmpty(BoardM.emptyCellPositions(b))) {
-    return TE.right({ board: b, winner: winner(b), history });
+    return Promise.resolve({ board: b, winner: winner(b), history });
   }
 
   const moveFn = currentTurn === 1 ? moveFns.p1 : moveFns.p2;
 
-  pipe(
-    moveFn(b, currentTurn),
-    TE.chain(({ move, scores }) => {
-      console.log("After moved");
-      return pipe(
-        TE.fromEither(BoardM.setCellAtPos(b)(move.pos, currentTurn)),
-        TE.chain(newB => {
+  console.log("[MOVEFN]");
+
+  return moveFn(b, currentTurn)().then(r => {
+    return pipe(
+      r,
+      E.chain(({ move, scores }) =>
+        pipe(
+          BoardM.setCellAtPos(b)(move.pos, currentTurn),
+          E.chain(
+            (
+              newB
+            ): Either<
+              Error,
+              { newB: Board; move: Move; scores: Array<Score> }
+            > =>
+              E.right({
+                newB,
+                move,
+                scores
+              })
+          )
+        )
+      ),
+      E.fold(
+        err => Promise.reject(err),
+        ({ newB, move, scores }) => {
           const historyItem = {
             board: b,
             scores,
             move
           };
           const newHistory = history.concat([historyItem]);
-
-          // console.log(BoardM.show(newB));
-          // console.log("\n");
-
           return pipe(
             winner(newB),
             O.fold(
               () => run_(newB, currentTurn === 1 ? -1 : 1, newHistory, moveFns),
               winner =>
-                TE.right({
+                Promise.resolve({
                   board: newB,
                   winner: O.some(winner),
                   history: newHistory
                 })
             )
           );
-        })
-      );
-    })
-  );
+        }
+      )
+    );
+  });
 };
 
 export const winner = (b: Board): Option<1 | -1> => {
