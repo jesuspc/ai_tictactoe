@@ -54,23 +54,12 @@ export const train = (
   );
   const targets = tf.tensor(ys);
 
-  console.log("[Inputs]", xxs);
-  console.log("[Targets]", ys);
-
-  // const targets = tf.tensor(
-  //   pipe(
-  //     xs,
-  //     A.map(e => [1, 0, 0, 0, 0, 0, 0, 0, 0])
-  //   )
-  // );
-
   return TE.tryCatch(
     () =>
       model
         .fit(inputs, targets, {
-          // shuffle: true,
-          // epochs: 20,
-          epochs: 1,
+          shuffle: true,
+          epochs: 20,
           callbacks: {
             onEpochEnd: (epoch, logs) => {
               // console.log("Epoch " + epoch);
@@ -107,12 +96,9 @@ export const move = (model: Model) => (
       .softmax()
       .dataSync()
   );
-  console.log("[Preds]", prediction);
-  console.log("[Probs]", probs);
   const validProbs = A.zipWith(probs, BoardM.toArray(board), (prob, real) =>
     real === 0 ? prob : -1
   );
-  console.log("[Valid Probs]", validProbs);
 
   const [probIdx, prob, pred] = pipe(
     validProbs,
@@ -120,8 +106,6 @@ export const move = (model: Model) => (
       v > acc[1] ? [i, v, prediction[i]] : acc
     )
   );
-
-  console.log("[RES]", probIdx, prob, pred);
 
   const row = Math.floor(probIdx / dim);
   const col = Math.floor(probIdx % dim);
