@@ -60,6 +60,7 @@ export const train = (
         .fit(inputs, targets, {
           shuffle: true,
           epochs: 20,
+          verbose: 0,
           callbacks: {
             onEpochEnd: (epoch, logs) => {
               // console.log("Epoch " + epoch);

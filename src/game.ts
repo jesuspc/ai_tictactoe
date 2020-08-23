@@ -83,8 +83,8 @@ const runGame_ = (
       };
       const newHistory = history.concat([historyItem]);
 
-      console.log(BoardM.show(newB));
-      console.log("\n");
+      // console.log(BoardM.show(newB));
+      // console.log("\n");
 
       return pipe(
         winner(newB),
