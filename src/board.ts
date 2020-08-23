@@ -83,6 +83,7 @@ export const setCellAtPos = (b: Board) => (
   [i, j]: Pos,
   val: Cell
 ): Either<SetCellError, Board> => {
+  console.log("Set at pos", i, j);
   let error: SetCellError | null;
   return pipe(
     b,

@@ -23,8 +23,8 @@ export const mkModel = (boardDim: number): Model => {
       }),
       // Returns the Q-value of each cell
       tf.layers.dense({
-        units: boardDim ** 2,
-        activation: "softmax"
+        units: boardDim ** 2
+        // activation: "softmax"
       })
     ]
   });
@@ -86,7 +86,7 @@ export const train = (
   );
 };
 
-export const probs = (model: Model, b: Board): Array<number> => {
+export const preds = (model: Model, b: Board): Array<number> => {
   const xs = tf.tensor([BoardM.toBinaryArray(b)]);
   const predRaw = model.predict(xs);
   const pred = Array.isArray(predRaw) ? predRaw[0] : predRaw;
@@ -100,23 +100,34 @@ export const move = (model: Model) => (
 ): { move: Move; prediction: Array<number> } => {
   const dim = BoardM.dim(board).rows;
 
-  const prediction = probs(model, board);
-  const validProbs = A.zipWith(
-    prediction,
-    BoardM.toArray(board),
-    (prob, real) => (real === 0 ? prob : -1)
+  const prediction = preds(model, board);
+  const probs = Array.from(
+    tf
+      .tensor(prediction)
+      .softmax()
+      .dataSync()
+  );
+  console.log("[Preds]", prediction);
+  console.log("[Probs]", probs);
+  const validProbs = A.zipWith(probs, BoardM.toArray(board), (prob, real) =>
+    real === 0 ? prob : -1
+  );
+  console.log("[Valid Probs]", validProbs);
+
+  const [probIdx, prob, pred] = pipe(
+    validProbs,
+    A.reduceWithIndex([0, -1, -1], (i, acc, v) =>
+      v > acc[1] ? [i, v, prediction[i]] : acc
+    )
   );
 
-  const [probIdx, prob] = pipe(
-    validProbs,
-    A.reduceWithIndex([0, -1], (i, acc, v) => (v > acc[1] ? [i, v] : acc))
-  );
+  console.log("[RES]", probIdx, prob, pred);
 
   const row = Math.floor(probIdx / dim);
   const col = Math.floor(probIdx % dim);
 
   return {
-    move: { score: prob, idx: probIdx, player, pos: [row, col] },
+    move: { score: pred, idx: probIdx, player, pos: [row, col] },
     prediction
   };
 };
