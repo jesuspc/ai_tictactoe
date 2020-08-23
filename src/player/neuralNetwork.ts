@@ -118,18 +118,13 @@ export const move = (model: Model) => (
     A.reduceWithIndex([0, -1], (i, acc, v) => (v > acc[1] ? [i, v] : acc))
   );
 
-  console.log("Move neural");
-  return TE.tryCatch(
-    () =>
-      Promise.resolve({
-        move: {
-          score: pred,
-          idx: probIdx,
-          player,
-          pos: BoardM.posFromArray(dim, probIdx)
-        },
-        scores: xs
-      }),
-    _err => "move_error"
-  );
+  return TE.right({
+    move: {
+      score: pred,
+      idx: probIdx,
+      player,
+      pos: BoardM.posFromArray(dim, probIdx)
+    },
+    scores: xs
+  });
 };

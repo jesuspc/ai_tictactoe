@@ -49,7 +49,6 @@ export const runOne = (m: Model): Training => {
     discount: 0.95
   });
 
-  console.log("Run one");
   return pipe(
     GameM.run(BoardM.mkEmpty(), 1, {
       p1: NN.move(m),

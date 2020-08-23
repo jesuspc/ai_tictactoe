@@ -7,7 +7,6 @@ import * as BoardM from "./board";
 import { TaskEither } from "fp-ts/lib/TaskEither";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as E from "fp-ts/lib/Either";
-import { Either } from "fp-ts/lib/Either";
 import { Board, Pos, SetCellError } from "./board";
 
 export type Error = "move_error" | "game_execution_error" | SetCellError;
@@ -39,12 +38,8 @@ export const run = (
   currentTurn: 1 | -1,
   move: { p1: MoveFn; p2: MoveFn }
 ): TaskEither<Error, GameState> => {
-  console.log("[Running]");
   return TE.tryCatch(
-    () => {
-      console.log("[Calling run_]");
-      return run_(b, currentTurn, [], move);
-    },
+    () => run_(b, currentTurn, [], move),
     _err => "game_execution_error"
   );
 };
@@ -55,7 +50,6 @@ export const run_ = (
   history: GameHistory,
   moveFns: { p1: MoveFn; p2: MoveFn }
 ): Promise<GameState> => {
-  console.log("[RUN_]");
   // TODO Thread this in
   if (A.isEmpty(BoardM.emptyCellPositions(b))) {
     return Promise.resolve({ board: b, winner: winner(b), history });
@@ -63,26 +57,19 @@ export const run_ = (
 
   const moveFn = currentTurn === 1 ? moveFns.p1 : moveFns.p2;
 
-  console.log("[MOVEFN]");
-
+  // TODO Had to stop using TaskEither due to an issue with fp-ts TE.chain
   return moveFn(b, currentTurn)().then(r => {
     return pipe(
       r,
       E.chain(({ move, scores }) =>
         pipe(
           BoardM.setCellAtPos(b)(move.pos, currentTurn),
-          E.chain(
-            (
-              newB
-            ): Either<
-              Error,
-              { newB: Board; move: Move; scores: Array<Score> }
-            > =>
-              E.right({
-                newB,
-                move,
-                scores
-              })
+          E.chain(newB =>
+            E.right<Error, { newB: Board; move: Move; scores: Array<Score> }>({
+              newB,
+              move,
+              scores
+            })
           )
         )
       ),
@@ -94,7 +81,9 @@ export const run_ = (
             scores,
             move
           };
+
           const newHistory = history.concat([historyItem]);
+
           return pipe(
             winner(newB),
             O.fold(
