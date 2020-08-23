@@ -2,6 +2,7 @@ dependencies:
   '@tensorflow/tfjs': 2.0.1
   '@tensorflow/tfjs-node': 2.3.0
   fp-ts: 2.8.1
+  readline: 1.3.0
   typescript: 3.9.7
 devDependencies:
   '@types/chai': 4.2.12
@@ -1285,6 +1286,10 @@ packages:
       node: '>=8.10.0'
     resolution:
       integrity: sha512-zz0pAkSPOXXm1viEwygWIPSPkcBYjW1xU5j/JBh5t9bGCJwa6f9+BJa6VaB2g+b55yVrmXzqkyLf4xaWYM0IkQ==
+  /readline/1.3.0:
+    dev: false
+    resolution:
+      integrity: sha1-xYDXfvLPyHUrEySYBg3JeTp6wBw=
   /regenerator-runtime/0.13.7:
     dev: false
     resolution:
@@ -1608,5 +1613,6 @@ specifiers:
   chai: ^4.2.0
   fp-ts: ^2.8.1
   mocha: ^8.1.1
+  readline: ^1.3.0
   ts-node: ^9.0.0
   typescript: ^3.9.7

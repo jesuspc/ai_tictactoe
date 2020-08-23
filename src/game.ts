@@ -36,10 +36,11 @@ export type GameState = {
 export const run = (
   b: Board,
   currentTurn: 1 | -1,
-  move: { p1: MoveFn; p2: MoveFn }
+  move: { p1: MoveFn; p2: MoveFn },
+  verbose = false
 ): TaskEither<Error, GameState> => {
   return TE.tryCatch(
-    () => run_(b, currentTurn, [], move),
+    () => run_(b, currentTurn, [], move, verbose),
     _err => "game_execution_error"
   );
 };
@@ -48,10 +49,15 @@ export const run_ = (
   b: Board,
   currentTurn: 1 | -1,
   history: GameHistory,
-  moveFns: { p1: MoveFn; p2: MoveFn }
+  moveFns: { p1: MoveFn; p2: MoveFn },
+  verbose = false
 ): Promise<GameState> => {
   // TODO Thread this in
   if (A.isEmpty(BoardM.emptyCellPositions(b))) {
+    if (verbose) {
+      console.log("\n Game ended in a tie \n");
+      console.log(BoardM.show(b));
+    }
     return Promise.resolve({ board: b, winner: winner(b), history });
   }
 
@@ -87,13 +93,25 @@ export const run_ = (
           return pipe(
             winner(newB),
             O.fold(
-              () => run_(newB, currentTurn === 1 ? -1 : 1, newHistory, moveFns),
-              winner =>
-                Promise.resolve({
+              () =>
+                run_(
+                  newB,
+                  currentTurn === 1 ? -1 : 1,
+                  newHistory,
+                  moveFns,
+                  verbose
+                ),
+              winner => {
+                if (verbose) {
+                  console.log("\n Winner is", winner === 1 ? "X" : "O", "\n");
+                  console.log(BoardM.show(newB));
+                }
+                return Promise.resolve({
                   board: newB,
                   winner: O.some(winner),
                   history: newHistory
-                })
+                });
+              }
             )
           );
         }
