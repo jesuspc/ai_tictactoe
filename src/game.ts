@@ -77,11 +77,14 @@ const runGame_ = (
     O.fromEither(BoardM.setCellAtPos(b)(move.pos, currentTurn)),
     O.chain(newB => {
       const historyItem = {
-        board: newB,
+        board: b,
         prediction,
         move
       };
       const newHistory = history.concat([historyItem]);
+
+      console.log(BoardM.show(newB));
+      console.log("\n");
 
       return pipe(
         winner(newB),

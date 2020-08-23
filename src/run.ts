@@ -48,21 +48,8 @@ export const runOne = (m: Model): ExecuteOne => {
     p2: GameM.moveRandom
   });
 
-  const p1h = pipe(
-    game.history,
-    A.filter(e => e.move.player === 1),
-    x => trainData(x, 1)
-  );
-
-  // const p2h = pipe(
-  //   game.history,
-  //   A.filter(e => e.move.player === -1),
-  //   x => trainData(x, -1)
-  // );
-
   return pipe(
-    // [...p1h, ...p2h],
-    NN.train(p1h, m),
+    NN.train(trainData(game, 1), m),
     TE.map(model => ({ game, model }))
   );
 };
@@ -125,13 +112,18 @@ const mkTrainData = ({
   lossValue = -1,
   discount = 0.95
 }) => (
-  xs: GameHistory,
+  g: GameState,
   player: 1 | -1
 ): Array<{ board: Board; targets: Array<number> }> => {
+  const xs = pipe(
+    g.history,
+    A.filter(e => e.move.player === player)
+  );
+
   const finalScore = pipe(
     xs,
     A.last,
-    O.chain(({ board }) => GameM.winner(board)),
+    O.chain(() => g.winner),
     O.fold(
       () => drawValue,
       p => (p === player ? winValue : lossValue)

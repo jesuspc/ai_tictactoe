@@ -42,29 +42,39 @@ export const train = (
   xs: Array<{ board: Board; targets: Targets }>,
   model: Model
 ): TaskEither<Error, Model> => {
-  const inputs = tf.tensor(
-    pipe(
-      xs,
-      A.map(({ board }) => BoardM.toBinaryArray(board))
-    )
+  const xxs = pipe(
+    xs,
+    A.map(({ board }) => BoardM.toBinaryArray(board))
   );
-  const targets = tf.tensor(
-    pipe(
-      xs,
-      A.map(({ targets }) => targets)
-    )
+  const inputs = tf.tensor(xxs);
+
+  const ys = pipe(
+    xs,
+    A.map(({ targets }) => targets)
   );
+  const targets = tf.tensor(ys);
+
+  console.log("[Inputs]", xxs);
+  console.log("[Targets]", ys);
+
+  // const targets = tf.tensor(
+  //   pipe(
+  //     xs,
+  //     A.map(e => [1, 0, 0, 0, 0, 0, 0, 0, 0])
+  //   )
+  // );
 
   return TE.tryCatch(
     () =>
       model
         .fit(inputs, targets, {
-          shuffle: true,
-          epochs: 20,
+          // shuffle: true,
+          // epochs: 20,
+          epochs: 1,
           callbacks: {
             onEpochEnd: (epoch, logs) => {
-              console.log("Epoch " + epoch);
-              console.log("Loss: " + logs.loss + " accuracy: " + logs.acc);
+              // console.log("Epoch " + epoch);
+              // console.log("Loss: " + logs.loss + " accuracy: " + logs.acc);
             }
           }
         })
