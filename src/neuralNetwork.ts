@@ -90,21 +90,16 @@ export const move = (model: Model) => (
   const dim = BoardM.dim(board).rows;
 
   const prediction = preds(model, board);
-  const probs = Array.from(
-    tf
-      .tensor(prediction)
-      .softmax()
-      .dataSync()
-  );
-  const validProbs = A.zipWith(probs, BoardM.toArray(board), (prob, real) =>
-    real === 0 ? prob : -1
+
+  const validPreds = A.zipWith(
+    prediction,
+    BoardM.toArray(board),
+    (prob, real) => (real === 0 ? prob : -1)
   );
 
-  const [probIdx, prob, pred] = pipe(
-    validProbs,
-    A.reduceWithIndex([0, -1, -1], (i, acc, v) =>
-      v > acc[1] ? [i, v, prediction[i]] : acc
-    )
+  const [probIdx, pred] = pipe(
+    validPreds,
+    A.reduceWithIndex([0, -1], (i, acc, v) => (v > acc[1] ? [i, v] : acc))
   );
 
   const row = Math.floor(probIdx / dim);
