@@ -5,8 +5,9 @@ import * as O from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { MoveFn } from "./game";
 
-// import * as Stats from "./src/stats"; import * as G from "./src/game";
-// var stats = Stats.runMany(10, { p1: G.moveRandom, p2: G.moveRandom });
+// import * as Stats from "./src/stats"; import * as G from "./src/game"; import * as NN from "./src/player/neuralNetwork"; import * as RandomP from "./src/player/random";
+// var nn = null as any; NN.load("file://models/nn-3-10000/model.json").then(n => nn = n);
+// var stats = Stats.runMany(10, { p1: NN.move(nn), p2: G.moveRandom });
 
 export type Total = {
   runs: number;

@@ -51,6 +51,20 @@ A model can be retrieved by referencing the corresponding `model.json` file:
 NN.load("file://models/nn-3-10000/model.json").then(model => console.log(model))
 #+END_SRC
 
+** Running
+
+The Stats module provides utility functions to execute multiple games with different configurations:
+
+#+BEGIN_SRC typescript
+import * as Stats from "./src/stats";
+import * as NN from "./src/player/neuralNetwork";
+import * as RandomP from "./src/player/random";
+
+NN.load("file://models/nn-3-10000/model.json").then(model => {
+  console.log(Stats.runMany(1000, { p1: NN.move(model), p2: RandomP.move }))
+})
+#+END_SRC
+
 * References
 
 - [[https://medium.com/@carsten.friedrich/part-4-neural-network-q-learning-a-tic-tac-toe-player-that-learns-kind-of-2090ca4798d][Carsten Friedrich - Neural Network Q Learning, a Tic Tac Toe player that learns]]
