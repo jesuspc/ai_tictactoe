@@ -46,6 +46,7 @@ export const dim = (b: Board): { rows: number } => ({
 });
 
 export const toArray = (b: Board): Array<Cell> => pipe(b, A.flatten);
+
 // dim Crosses - dim Naughts - dim Empty
 export const toBinaryArray = (b: Board): Array<boolean> => {
   const d = dim(b).rows ** 2;
@@ -72,6 +73,10 @@ export const toBinaryArray = (b: Board): Array<boolean> => {
       return acc;
     })
   );
+};
+
+export const posFromArray = (dim: number, x: number): Pos => {
+  return [Math.floor(x / dim), Math.floor(x % dim)];
 };
 
 export const getCellAtPos = (b: Board) => ([i, j]: Pos): Option<Cell> =>

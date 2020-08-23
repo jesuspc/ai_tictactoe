@@ -14,9 +14,22 @@ export type Total = {
   os: number;
   ties: number;
 };
+export type Ratio = {
+  xs: number;
+  os: number;
+  ties: number;
+};
 export type Stats = {
   total: Total;
-  totalRatio: { xs: number; os: number; ties: number };
+  totalRatio: Ratio;
+};
+
+export const toRatios = (total: Total): Ratio => {
+  return {
+    xs: total.xs / total.runs,
+    os: total.os / total.runs,
+    ties: total.ties / total.runs
+  };
 };
 
 export const runMany = (n: number, move: { p1: MoveFn; p2: MoveFn }): Stats => {
@@ -45,10 +58,6 @@ export const runMany = (n: number, move: { p1: MoveFn; p2: MoveFn }): Stats => {
 
   return {
     total,
-    totalRatio: {
-      xs: total.xs / total.runs,
-      os: total.os / total.runs,
-      ties: total.ties / total.runs
-    }
+    totalRatio: toRatios(total)
   };
 };

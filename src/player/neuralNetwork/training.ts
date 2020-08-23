@@ -1,10 +1,12 @@
-import * as NN from "./neuralNetwork";
-import { Model } from "./neuralNetwork";
-import * as BoardM from "./board";
-import { Board } from "./board";
-import { Total, Stats } from "./stats";
-import * as GameM from "./game";
-import { GameHistory, GameState } from "./game";
+import * as NN from "../neuralNetwork";
+import { Model } from "../neuralNetwork";
+import * as BoardM from "../../board";
+import { Board } from "../../board";
+import { Total, Stats } from "../../stats";
+import * as StatsM from "../../stats";
+import * as GameM from "../../game";
+import { GameState } from "../../game";
+import * as RandomP from "../random";
 import * as A from "fp-ts/lib/Array";
 import * as TE from "fp-ts/lib/TaskEither";
 import { TaskEither } from "fp-ts/lib/TaskEither";
@@ -12,11 +14,11 @@ import * as O from "fp-ts/lib/Option";
 import * as E from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 
-// import * as NN from "./src/neuralNetwork"; import { execute, runOne, runMany } from "./src/run";
-// execute(runMany(NN.mkModel(3), 1))
+// import * as NN from "./src/player/neuralNetwork"; import { execute, training } from "./src/player/neuralNetwork/training";
+// execute(training(NN.mkModel(3), 1))
 
-type Execution = TaskEither<NN.Error, { stats: Stats; model: Model }>;
-export const execute = (ex: Execution) => {
+type TrainingSession = TaskEither<NN.Error, { stats: Stats; model: Model }>;
+export const execute = (ex: TrainingSession) => {
   return ex().then(res => {
     pipe(
       res,
@@ -32,10 +34,9 @@ export const execute = (ex: Execution) => {
   });
 };
 
-type ExecuteOne = TaskEither<NN.Error, { game: GameState; model: Model }>;
-export const runOne = (m: Model): ExecuteOne => {
-  const board = BoardM.mkEmpty();
-  const trainData = mkTrainData({
+type Training = TaskEither<NN.Error, { game: GameState; model: Model }>;
+export const runOne = (m: Model): Training => {
+  const trainingData = mkTrainingData({
     winValue: 1,
     drawValue: 0,
     lossValue: -1,
@@ -44,18 +45,18 @@ export const runOne = (m: Model): ExecuteOne => {
 
   const game = GameM.runGame(BoardM.mkEmpty(), 1, {
     p1: NN.move(m),
-    p2: GameM.moveRandom
+    p2: RandomP.move
   });
 
   return pipe(
-    NN.train(trainData(game, 1), m),
+    NN.train(trainingData(game, 1), m),
     TE.map(model => ({ game, model }))
   );
 };
 
-export const runMany = (m: Model, n: number): Execution => {
+export const training = (m: Model, numGames: number): TrainingSession => {
   return pipe(
-    A.range(1, n),
+    A.range(1, numGames),
     A.reduce(
       TE.right<NN.Error, { total: Total; model: Model }>({
         total: { runs: 0, xs: 0, os: 0, ties: 0 },
@@ -93,19 +94,15 @@ export const runMany = (m: Model, n: number): Execution => {
       return {
         model,
         stats: {
-          total: total,
-          totalRatio: {
-            xs: total.xs / total.runs,
-            os: total.os / total.runs,
-            ties: total.ties / total.runs
-          }
+          total,
+          totalRatio: StatsM.toRatios(total)
         }
       };
     })
   );
 };
 
-const mkTrainData = ({
+const mkTrainingData = ({
   winValue = 1,
   drawValue = 0,
   lossValue = -1,
@@ -120,9 +117,7 @@ const mkTrainData = ({
   );
 
   const finalScore = pipe(
-    xs,
-    A.last,
-    O.chain(() => g.winner),
+    g.winner,
     O.fold(
       () => drawValue,
       p => (p === player ? winValue : lossValue)
@@ -142,7 +137,7 @@ const mkTrainData = ({
     A.zip(nextProbs),
     A.map(([b, pp1]) => ({
       targets: pipe(
-        b.prediction,
+        b.scores,
         A.mapWithIndex((i, p) => (i === b.move.idx ? discount * pp1 : p))
       ),
       board: b.board

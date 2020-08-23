@@ -6,9 +6,7 @@ import { constant } from "fp-ts/lib/function";
 import * as BoardM from "./board";
 import { Board, Pos } from "./board";
 
-// import * as B from "./src/board"; import * as G from "./src/game";
-// var game = G.runGame(B.mkEmpty(), 1, { p1: G.moveRandom, p2: G.moveRandom }); console.log(B.show(game.board)); console.log(game.winner);
-
+export type Score = number;
 export type Move = {
   score: number;
   idx: number;
@@ -18,33 +16,16 @@ export type Move = {
 export type MoveFn = (
   board: Board,
   player: 1 | -1
-) => { move: Move; prediction: Array<number> };
+) => { move: Move; scores: Array<Score> };
 export type GameHistory = Array<{
   board: Board;
   move: Move;
-  prediction: Array<number>;
+  scores: Array<Score>;
 }>;
 export type GameState = {
   board: Board;
   winner: Option<1 | -1>;
   history: GameHistory;
-};
-
-export const moveRandom = (
-  b: Board,
-  player: 1 | -1
-): { move: Move; prediction: Array<number> } => {
-  const available = BoardM.emptyCellPositions(b);
-  const index = Math.floor(Math.random() * available.length);
-  const pos = pipe(
-    available,
-    A.lookup(index),
-    O.getOrElse(() => {
-      throw new Error("Impossible access of array possition");
-    })
-  );
-
-  return { move: { idx: 0, pos, score: 1, player }, prediction: [] };
 };
 
 export const runGame = (
@@ -70,7 +51,7 @@ const runGame_ = (
     return O.some({ board: b, winner: winner(b), history });
   }
 
-  const { move, prediction } =
+  const { move, scores } =
     currentTurn === 1 ? moveFns.p1(b, currentTurn) : moveFns.p2(b, currentTurn);
 
   return pipe(
@@ -78,7 +59,7 @@ const runGame_ = (
     O.chain(newB => {
       const historyItem = {
         board: b,
-        prediction,
+        scores,
         move
       };
       const newHistory = history.concat([historyItem]);

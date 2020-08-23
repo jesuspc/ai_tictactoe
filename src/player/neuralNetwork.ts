@@ -1,13 +1,13 @@
 import * as tf from "@tensorflow/tfjs-node";
 import * as A from "fp-ts/lib/Array";
 import { pipe } from "fp-ts/lib/pipeable";
-import { Board } from "./board";
-import { Move } from "./game";
-import * as BoardM from "./board";
+import { Board } from "../board";
+import { Score, Move } from "../game";
+import * as BoardM from "../board";
 import * as TE from "fp-ts/lib/TaskEither";
 import { TaskEither } from "fp-ts/lib/TaskEither";
 
-type Targets = Array<number>;
+type Targets = Array<Score>;
 export type Model = tf.Sequential;
 
 export type Error = "training_error";
@@ -42,17 +42,19 @@ export const train = (
   xs: Array<{ board: Board; targets: Targets }>,
   model: Model
 ): TaskEither<Error, Model> => {
-  const xxs = pipe(
-    xs,
-    A.map(({ board }) => BoardM.toBinaryArray(board))
+  const inputs = tf.tensor(
+    pipe(
+      xs,
+      A.map(({ board }) => BoardM.toBinaryArray(board))
+    )
   );
-  const inputs = tf.tensor(xxs);
 
-  const ys = pipe(
-    xs,
-    A.map(({ targets }) => targets)
+  const targets = tf.tensor(
+    pipe(
+      xs,
+      A.map(({ targets }) => targets)
+    )
   );
-  const targets = tf.tensor(ys);
 
   return TE.tryCatch(
     () =>
@@ -62,7 +64,7 @@ export const train = (
           epochs: 20,
           verbose: 0,
           callbacks: {
-            onEpochEnd: (epoch, logs) => {
+            onEpochEnd: (_epoch, _logs) => {
               // console.log("Epoch " + epoch);
               // console.log("Loss: " + logs.loss + " accuracy: " + logs.acc);
             }
@@ -76,7 +78,7 @@ export const train = (
   );
 };
 
-export const preds = (model: Model, b: Board): Array<number> => {
+export const qValues = (model: Model, b: Board): Array<Score> => {
   const xs = tf.tensor([BoardM.toBinaryArray(b)]);
   const predRaw = model.predict(xs);
   const pred = Array.isArray(predRaw) ? predRaw[0] : predRaw;
@@ -87,27 +89,24 @@ export const preds = (model: Model, b: Board): Array<number> => {
 export const move = (model: Model) => (
   board: Board,
   player: 1 | -1
-): { move: Move; prediction: Array<number> } => {
+): { move: Move; scores: Array<Score> } => {
   const dim = BoardM.dim(board).rows;
 
-  const prediction = preds(model, board);
-
-  const validPreds = A.zipWith(
-    prediction,
-    BoardM.toArray(board),
-    (prob, real) => (real === 0 ? prob : -1)
-  );
-
+  const xs = qValues(model, board);
   const [probIdx, pred] = pipe(
-    validPreds,
+    A.zipWith(xs, BoardM.toArray(board), (prob, real) =>
+      real === 0 ? prob : -1
+    ),
     A.reduceWithIndex([0, -1], (i, acc, v) => (v > acc[1] ? [i, v] : acc))
   );
 
-  const row = Math.floor(probIdx / dim);
-  const col = Math.floor(probIdx % dim);
-
   return {
-    move: { score: pred, idx: probIdx, player, pos: [row, col] },
-    prediction
+    move: {
+      score: pred,
+      idx: probIdx,
+      player,
+      pos: BoardM.posFromArray(dim, probIdx)
+    },
+    scores: xs
   };
 };
