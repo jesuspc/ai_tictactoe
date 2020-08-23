@@ -3,3 +3,19 @@
 * AI Typescript TicTacToe
 
 Train a neural network to play TicTacToe
+
+** Training
+
+From an interactive ts-node session:
+
+#+BEGIN_SRC typescript
+import * as NN from "./src/player/neuralNetwork";
+import { execute, training } from "./src/player/neuralNetwork/training";
+
+execute(training(NN.mkModel(3), 100))
+
+// > [SUCCESS] Execution success: {
+//   total: { runs: 100, xs: 83, os: 13, ties: 4 },
+//   totalRatio: { xs: 0.83, os: 0.13, ties: 0.04 }
+// }
+#+END_SRC
