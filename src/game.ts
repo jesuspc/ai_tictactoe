@@ -14,15 +14,25 @@ export type Move = {
   player: 1 | -1;
   pos: Pos;
 };
-export type MoveFn = (board: Board, player: 1 | -1) => Move;
-export type GameHistory = Array<{ board: Board; move: Move }>;
+export type MoveFn = (
+  board: Board,
+  player: 1 | -1
+) => { move: Move; prediction: Array<number> };
+export type GameHistory = Array<{
+  board: Board;
+  move: Move;
+  prediction: Array<number>;
+}>;
 type GameState = {
   board: Board;
   winner: Option<1 | -1>;
   history: GameHistory;
 };
 
-export const moveRandom = (b: Board, player: 1 | -1): Move => {
+export const moveRandom = (
+  b: Board,
+  player: 1 | -1
+): { move: Move; prediction: Array<number> } => {
   const available = BoardM.emptyCellPositions(b);
   const index = Math.floor(Math.random() * available.length);
   const pos = pipe(
@@ -33,7 +43,7 @@ export const moveRandom = (b: Board, player: 1 | -1): Move => {
     })
   );
 
-  return { pos, score: 1, player };
+  return { move: { pos, score: 1, player }, prediction: [] };
 };
 
 export const runGame = (
@@ -59,14 +69,17 @@ const runGame_ = (
     return O.some({ board: b, winner: winner(b), history });
   }
 
-  const { pos, score, player } =
-    currentTurn === 1 ? move.p1(b, currentTurn) : move.p2(b, currentTurn);
+  const {
+    move: { pos, score, player },
+    prediction
+  } = currentTurn === 1 ? move.p1(b, currentTurn) : move.p2(b, currentTurn);
 
   return pipe(
     O.fromEither(BoardM.setCellAtPos(b)(pos, currentTurn)),
     O.chain(newB => {
       const historyItem = {
         board: newB,
+        prediction,
         move: { score, player, pos }
       };
       const newHistory = history.concat([historyItem]);

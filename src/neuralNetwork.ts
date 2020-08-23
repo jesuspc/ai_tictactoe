@@ -68,11 +68,15 @@ export const probs = (model: Model, b: Board): Array<number> => {
   return Array.from(pred.dataSync());
 };
 
-export const move = (model: Model) => (board: Board, player: 1 | -1): Move => {
+export const move = (model: Model) => (
+  board: Board,
+  player: 1 | -1
+): { move: Move; prediction: Array<number> } => {
   const dim = BoardM.dim(board).rows;
 
+  const prediction = probs(model, board);
   const validProbs = A.zipWith(
-    probs(model, board),
+    prediction,
     BoardM.toArray(board),
     (prob, real) => (real === 0 ? prob : -1)
   );
@@ -85,5 +89,5 @@ export const move = (model: Model) => (board: Board, player: 1 | -1): Move => {
   const row = Math.floor(probIdx / dim);
   const col = Math.floor(probIdx % dim);
 
-  return { score: prob, player, pos: [row, col] };
+  return { move: { score: prob, player, pos: [row, col] }, prediction };
 };
