@@ -1,14 +1,13 @@
 import * as tf from "@tensorflow/tfjs-node";
 import * as A from "fp-ts/lib/Array";
-import * as E from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
-import { identity } from "fp-ts/lib/function";
-import { Move, Board } from "./board";
+import { Board } from "./board";
+import { Move } from "./game";
 import * as BoardM from "./board";
 import * as TE from "fp-ts/lib/TaskEither";
 import { TaskEither } from "fp-ts/lib/TaskEither";
 
-type QValues = Array<number>;
+type Targets = Array<number>;
 export type Model = tf.Sequential;
 
 type Error = "training_error";
@@ -37,13 +36,13 @@ export const mkModel = (boardDim: number): Model => {
 
 export const train = (
   b: Board,
-  qvalues: QValues,
+  targets: Targets,
   model: Model
 ): TaskEither<Error, Model> => {
   return TE.tryCatch(
     () =>
       model
-        .fit(tf.tensor(BoardM.toBinaryArray(b)), tf.tensor(qvalues), {
+        .fit(tf.tensor(BoardM.toBinaryArray(b)), tf.tensor(targets), {
           shuffle: true,
           epochs: 20,
           callbacks: {
@@ -86,14 +85,5 @@ export const move = (model: Model) => (board: Board, player: 1 | -1): Move => {
   const row = Math.floor(probIdx / dim);
   const col = Math.floor(probIdx % dim);
 
-  return pipe(
-    BoardM.setCellAtPos(board)([row, col], player),
-    E.fold(
-      err => {
-        console.log("[ERROR] Unexpected fail on set cell value", err);
-        throw err;
-      },
-      b => ({ board: b, prob })
-    )
-  );
+  return { score: prob, player, pos: [row, col] };
 };
