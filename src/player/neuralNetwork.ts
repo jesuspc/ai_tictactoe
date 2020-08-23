@@ -8,7 +8,7 @@ import * as TE from "fp-ts/lib/TaskEither";
 import { TaskEither } from "fp-ts/lib/TaskEither";
 
 type Targets = Array<Score>;
-export type Model = tf.Sequential;
+export type Model = tf.LayersModel;
 
 export type Error = "training_error";
 
@@ -40,6 +40,20 @@ export const mkModel = ({
   });
 
   return model;
+};
+
+export const persist = (m: Model, path: string): Promise<void> => {
+  return m.save(path).then(res => {
+    if (!res.errors || res.errors.length === 0) {
+      console.log("[SUCCESS] Model persisted in path", path);
+    } else {
+      console.log("[ERROR] Failed to persist model", res.errors);
+    }
+  });
+};
+
+export const load = (path: string): Promise<Model> => {
+  return tf.loadLayersModel(path);
 };
 
 export const train = (

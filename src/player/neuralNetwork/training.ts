@@ -15,19 +15,23 @@ import * as E from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/pipeable";
 
 // import * as NN from "./src/player/neuralNetwork"; import { execute, training } from "./src/player/neuralNetwork/training";
-// execute(training(NN.mkModel(3), 1))
+// execute(training(NN.mkModel({ boardDimension:3 }), { numGames: 1 }))
 
 type TrainingSession = TaskEither<NN.Error, { stats: Stats; model: Model }>;
-export const execute = (ex: TrainingSession) => {
+export const execute = (
+  ex: TrainingSession
+): Promise<{ stats: Stats; model: Model }> => {
   return ex().then(res => {
-    pipe(
+    return pipe(
       res,
       E.fold(
         err => {
           console.log("[ERROR] Execution error:", err);
+          throw err;
         },
         succ => {
           console.log("[SUCCESS] Execution success:", succ.stats);
+          return succ;
         }
       )
     );
