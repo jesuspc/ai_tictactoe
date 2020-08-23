@@ -1,10 +1,8 @@
-#+TITLE: Readme
-
-* AI Typescript TicTacToe
+#+TITLE: AI Typescript TicTacToe
 
 Train a neural network to play TicTacToe
 
-** Training
+* Training
 
 From an interactive ts-node session:
 
@@ -12,10 +10,15 @@ From an interactive ts-node session:
 import * as NN from "./src/player/neuralNetwork";
 import { execute, training } from "./src/player/neuralNetwork/training";
 
-execute(training(NN.mkModel(3), 100))
+execute(training(NN.mkModel({ boardDimension: 3 }), { numGames: 100 }))
 
 // > [SUCCESS] Execution success: {
 //   total: { runs: 100, xs: 83, os: 13, ties: 4 },
 //   totalRatio: { xs: 0.83, os: 0.13, ties: 0.04 }
 // }
 #+END_SRC
+
+* References
+
+- [[https://medium.com/@carsten.friedrich/part-4-neural-network-q-learning-a-tic-tac-toe-player-that-learns-kind-of-2090ca4798d][Carsten Friedrich - Neural Network Q Learning, a Tic Tac Toe player that learns]]
+- [[https://towardsdatascience.com/build-a-simple-neural-network-with-tensorflow-js-d434a30fcb8][Venelin Valkov - Build a simple Neural Network with TensorFlow.js]]

@@ -12,18 +12,22 @@ export type Model = tf.Sequential;
 
 export type Error = "training_error";
 
-export const mkModel = (boardDim: number): Model => {
+export const mkModel = ({
+  boardDimension
+}: {
+  boardDimension: number;
+}): Model => {
   const model = tf.sequential({
     layers: [
       // Receives the binary-encoded representation of each cell
       tf.layers.dense({
-        inputShape: [boardDim ** 2 * 3],
-        units: boardDim ** 2 * 9 * 3,
+        inputShape: [boardDimension ** 2 * 3],
+        units: boardDimension ** 2 * 9 * 3,
         activation: "relu"
       }),
       // Returns the Q-value of each cell
       tf.layers.dense({
-        units: boardDim ** 2,
+        units: boardDimension ** 2,
         activation: null
       })
     ]

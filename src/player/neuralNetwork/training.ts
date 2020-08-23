@@ -54,7 +54,10 @@ export const runOne = (m: Model): Training => {
   );
 };
 
-export const training = (m: Model, numGames: number): TrainingSession => {
+export const training = (
+  m: Model,
+  { numGames }: { numGames: number }
+): TrainingSession => {
   return pipe(
     A.range(1, numGames),
     A.reduce(
