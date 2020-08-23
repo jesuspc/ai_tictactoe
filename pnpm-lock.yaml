@@ -1,7 +1,7 @@
 dependencies:
   '@tensorflow/tfjs': 2.0.1
   '@tensorflow/tfjs-node': 2.3.0
-  fp-ts: 2.7.1
+  fp-ts: 2.8.1
   typescript: 3.9.7
 devDependencies:
   '@types/chai': 4.2.12
@@ -653,10 +653,10 @@ packages:
       node: '>= 6'
     resolution:
       integrity: sha512-CKMFDglpbMi6PyN+brwB9Q/GOw0eAnsrEZDgcsH5Krhz5Od/haKHAX0NmQfha2zPPz0JpWzA7GJHGSnvCRLWsg==
-  /fp-ts/2.7.1:
+  /fp-ts/2.8.1:
     dev: false
     resolution:
-      integrity: sha512-rYy41jF1gVhBNYbPwup50dtyT686OKOoa86PXwh8aKpBRfmvPhnBh2zUkOYj84GIMSCsgY+oJ/RVhVKRvWNPTA==
+      integrity: sha512-HuA/6roEliHoBgEOLCKmGRcM90e2trW/ITZZ9d9P/ra7PreqQagC3Jg6OzqWkai13KUbG90b8QO9rHPBGK/ckw==
   /fs-minipass/1.2.7:
     dependencies:
       minipass: 2.9.0
@@ -1606,7 +1606,7 @@ specifiers:
   '@types/chai': ^4.2.12
   '@types/mocha': ^8.0.3
   chai: ^4.2.0
-  fp-ts: ^2.7.1
+  fp-ts: ^2.8.1
   mocha: ^8.1.1
   ts-node: ^9.0.0
   typescript: ^3.9.7

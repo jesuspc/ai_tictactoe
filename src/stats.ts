@@ -2,6 +2,8 @@ import * as B from "./board";
 import * as G from "./game";
 import * as A from "fp-ts/lib/Array";
 import * as O from "fp-ts/lib/Option";
+import * as TE from "fp-ts/lib/TaskEither";
+import { TaskEither } from "fp-ts/lib/TaskEither";
 import { pipe } from "fp-ts/lib/pipeable";
 import { MoveFn } from "./game";
 
@@ -33,32 +35,51 @@ export const toRatios = (total: Total): Ratio => {
   };
 };
 
-export const runMany = (n: number, move: { p1: MoveFn; p2: MoveFn }): Stats => {
-  const total = pipe(
+export const runMany = (
+  n: number,
+  move: { p1: MoveFn; p2: MoveFn }
+): TaskEither<G.Error, Stats> => {
+  const initial: TaskEither<G.Error, Total> = TE.right({
+    runs: 0,
+    xs: 0,
+    os: 0,
+    ties: 0
+  });
+
+  return pipe(
     A.range(1, n),
-    A.reduce({ runs: 0, xs: 0, os: 0, ties: 0 }, acc => {
-      const run = G.run(B.mkEmpty(), 1, move);
+    A.reduce(initial, accum => {
+      return pipe(
+        accum,
+        TE.chain(acc => {
+          return pipe(
+            G.run(B.mkEmpty(), 1, move),
+            TE.map(run => {
+              acc.runs += 1;
 
-      acc.runs += 1;
+              pipe(
+                run.winner,
+                O.fold(
+                  () => {
+                    acc.ties += 1;
+                  },
+                  v => {
+                    v === 1 ? (acc.xs += 1) : (acc.os += 1);
+                  }
+                )
+              );
 
-      pipe(
-        run.winner,
-        O.fold(
-          () => {
-            acc.ties += 1;
-          },
-          v => {
-            v === 1 ? (acc.xs += 1) : (acc.os += 1);
-          }
-        )
+              return acc;
+            })
+          );
+        })
       );
-
-      return acc;
+    }),
+    TE.map(total => {
+      return {
+        total,
+        totalRatio: toRatios(total)
+      };
     })
   );
-
-  return {
-    total,
-    totalRatio: toRatios(total)
-  };
 };

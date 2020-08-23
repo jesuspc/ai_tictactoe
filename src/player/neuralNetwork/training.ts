@@ -17,7 +17,9 @@ import { pipe } from "fp-ts/lib/pipeable";
 // import * as NN from "./src/player/neuralNetwork"; import { execute, training } from "./src/player/neuralNetwork/training";
 // execute(training(NN.mkModel({ boardDimension:3 }), { numGames: 1 }))
 
-type TrainingSession = TaskEither<NN.Error, { stats: Stats; model: Model }>;
+type Error = NN.TrainingError | GameM.Error;
+
+type TrainingSession = TaskEither<Error, { stats: Stats; model: Model }>;
 export const execute = (
   ex: TrainingSession
 ): Promise<{ stats: Stats; model: Model }> => {
@@ -38,7 +40,7 @@ export const execute = (
   });
 };
 
-type Training = TaskEither<NN.Error, { game: GameState; model: Model }>;
+type Training = TaskEither<Error, { game: GameState; model: Model }>;
 export const runOne = (m: Model): Training => {
   const trainingData = mkTrainingData({
     winValue: 1,
@@ -47,14 +49,18 @@ export const runOne = (m: Model): Training => {
     discount: 0.95
   });
 
-  const game = GameM.run(BoardM.mkEmpty(), 1, {
-    p1: NN.move(m),
-    p2: RandomP.move
-  });
-
+  console.log("Run one");
   return pipe(
-    NN.train(trainingData(game, 1), m),
-    TE.map(model => ({ game, model }))
+    GameM.run(BoardM.mkEmpty(), 1, {
+      p1: NN.move(m),
+      p2: RandomP.move
+    }),
+    TE.chain<Error, GameState, { game: GameState; model: Model }>(game =>
+      pipe(
+        NN.train(trainingData(game, 1), m),
+        TE.map(model => ({ game, model }))
+      )
+    )
   );
 };
 
@@ -65,7 +71,7 @@ export const training = (
   return pipe(
     A.range(1, numGames),
     A.reduce(
-      TE.right<NN.Error, { total: Total; model: Model }>({
+      TE.right<Error, { total: Total; model: Model }>({
         total: { runs: 0, xs: 0, os: 0, ties: 0 },
         model: m
       }),

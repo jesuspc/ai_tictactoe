@@ -4,7 +4,11 @@ import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { constant } from "fp-ts/lib/function";
 import * as BoardM from "./board";
-import { Board, Pos } from "./board";
+import { TaskEither } from "fp-ts/lib/TaskEither";
+import * as TE from "fp-ts/lib/TaskEither";
+import { Board, Pos, SetCellError } from "./board";
+
+export type Error = "move_error" | "game_execution_error" | SetCellError;
 
 export type Score = number;
 export type Move = {
@@ -16,7 +20,7 @@ export type Move = {
 export type MoveFn = (
   board: Board,
   player: 1 | -1
-) => { move: Move; scores: Array<Score> };
+) => TaskEither<"move_error", { move: Move; scores: Array<Score> }>;
 export type GameHistory = Array<{
   board: Board;
   move: Move;
@@ -32,52 +36,51 @@ export const run = (
   b: Board,
   currentTurn: 1 | -1,
   move: { p1: MoveFn; p2: MoveFn }
-): GameState =>
-  pipe(
-    runStep(b, currentTurn, [], move),
-    O.getOrElse(() => {
-      throw new Error("Game execution failed");
-    })
-  );
+): TaskEither<Error, GameState> => run_(b, currentTurn, [], move);
 
-export const runStep = (
+export const run_ = (
   b: Board,
   currentTurn: 1 | -1,
   history: GameHistory,
   moveFns: { p1: MoveFn; p2: MoveFn }
-): Option<GameState> => {
+): TaskEither<Error, GameState> => {
   // TODO Thread this in
   if (A.isEmpty(BoardM.emptyCellPositions(b))) {
-    return O.some({ board: b, winner: winner(b), history });
+    return TE.right({ board: b, winner: winner(b), history });
   }
 
-  const { move, scores } =
-    currentTurn === 1 ? moveFns.p1(b, currentTurn) : moveFns.p2(b, currentTurn);
+  const moveFn = currentTurn === 1 ? moveFns.p1 : moveFns.p2;
 
-  return pipe(
-    O.fromEither(BoardM.setCellAtPos(b)(move.pos, currentTurn)),
-    O.chain(newB => {
-      const historyItem = {
-        board: b,
-        scores,
-        move
-      };
-      const newHistory = history.concat([historyItem]);
-
-      // console.log(BoardM.show(newB));
-      // console.log("\n");
-
+  pipe(
+    moveFn(b, currentTurn),
+    TE.chain(({ move, scores }) => {
+      console.log("After moved");
       return pipe(
-        winner(newB),
-        O.fold(
-          () => runStep(newB, currentTurn === 1 ? -1 : 1, newHistory, moveFns),
-          winner =>
-            O.some({
-              board: newB,
-              winner: O.some(winner),
-              history: newHistory
-            })
-        )
+        TE.fromEither(BoardM.setCellAtPos(b)(move.pos, currentTurn)),
+        TE.chain(newB => {
+          const historyItem = {
+            board: b,
+            scores,
+            move
+          };
+          const newHistory = history.concat([historyItem]);
+
+          // console.log(BoardM.show(newB));
+          // console.log("\n");
+
+          return pipe(
+            winner(newB),
+            O.fold(
+              () => run_(newB, currentTurn === 1 ? -1 : 1, newHistory, moveFns),
+              winner =>
+                TE.right({
+                  board: newB,
+                  winner: O.some(winner),
+                  history: newHistory
+                })
+            )
+          );
+        })
       );
     })
   );

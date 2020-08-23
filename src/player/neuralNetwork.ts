@@ -10,7 +10,7 @@ import { TaskEither } from "fp-ts/lib/TaskEither";
 type Targets = Array<Score>;
 export type Model = tf.LayersModel;
 
-export type Error = "training_error";
+export type TrainingError = "training_error";
 
 export const mkModel = ({
   boardDimension
@@ -59,7 +59,7 @@ export const load = (path: string): Promise<Model> => {
 export const train = (
   xs: Array<{ board: Board; targets: Targets }>,
   model: Model
-): TaskEither<Error, Model> => {
+): TaskEither<TrainingError, Model> => {
   const inputs = tf.tensor(
     pipe(
       xs,
@@ -107,7 +107,7 @@ export const qValues = (model: Model, b: Board): Array<Score> => {
 export const move = (model: Model) => (
   board: Board,
   player: 1 | -1
-): { move: Move; scores: Array<Score> } => {
+): TaskEither<"move_error", { move: Move; scores: Array<Score> }> => {
   const dim = BoardM.dim(board).rows;
 
   const xs = qValues(model, board);
@@ -118,7 +118,7 @@ export const move = (model: Model) => (
     A.reduceWithIndex([0, -1], (i, acc, v) => (v > acc[1] ? [i, v] : acc))
   );
 
-  return {
+  return TE.right({
     move: {
       score: pred,
       idx: probIdx,
@@ -126,5 +126,5 @@ export const move = (model: Model) => (
       pos: BoardM.posFromArray(dim, probIdx)
     },
     scores: xs
-  };
+  });
 };

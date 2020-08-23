@@ -82,7 +82,7 @@ export const posFromArray = (dim: number, x: number): Pos => {
 export const getCellAtPos = (b: Board) => ([i, j]: Pos): Option<Cell> =>
   pipe(b, A.lookup(i), O.chain(A.lookup(j)));
 
-type SetCellError = "non-empty-cell" | "position-out-of-bounds";
+export type SetCellError = "non-empty-cell" | "position-out-of-bounds";
 
 export const setCellAtPos = (b: Board) => (
   [i, j]: Pos,
